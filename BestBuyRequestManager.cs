@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Web;
 using BestBuy.Sniper.Client.DataContracts;
@@ -92,7 +93,7 @@ namespace BestBuy.Sniper.Client {
 						Interval = TimeSpan.FromSeconds(this.RefreshIntervalSeconds).TotalMilliseconds
 					};
 					_timer.Elapsed += (object sender, ElapsedEventArgs e) => {
-						this.Search();
+						Task.Factory.StartNew(() => this.Search());
 					};
 				}
 				return _timer;
@@ -124,7 +125,7 @@ namespace BestBuy.Sniper.Client {
 
 		#region NumberConcurrentOfFailues
 
-		private readonly object _numberOfConcurrentFailuresLockObject = new ();
+		private readonly object _numberOfConcurrentFailuresLockObject = new();
 		private int _numberOfConcurrentFailures = 0;
 
 		private int NumberConcurrentOfFailues {
@@ -174,6 +175,53 @@ namespace BestBuy.Sniper.Client {
 				return System.Text.Json.JsonSerializer.Deserialize<SearchResult>(contentResponse.Result);
 			}
 			return null;
+
+		}
+
+		/// <summary>
+		/// Sends an email message using the configured SMTP email settings.
+		/// </summary>
+		/// <param name="subjectText"></param>
+		/// <param name="messageText"></param>
+		/// <param name="mailAddresses"></param>
+		private void SendMessage(string subjectText, string messageText, MailAddressCollection mailAddresses) {
+			if (mailAddresses?.Count > 0) {
+
+				using var client = new SmtpClient(this.SMTPAddress, this.SMTPPort);
+				using var message = new MailMessage();
+
+				client.Credentials = new NetworkCredential(this.SMTPUserName, this.SMTPPassword);
+				client.EnableSsl = this.SMTPEnableSSL;
+
+				message.Subject = subjectText;
+				message.Body = messageText;
+				message.From = new MailAddress(this.SMTPUserName);
+				foreach (var mailAddress in mailAddresses) {
+					message.To.Add(mailAddress);
+				}
+
+				client.Send(message);
+			}
+		}
+
+		/// <summary>
+		/// Sends an email message to all registered success email addresses using the configured SMTP email settings.
+		/// </summary>
+		/// <param name="subjectText"></param>
+		/// <param name="messageText"></param>
+		/// <param name="mailAddresses"></param>
+		public void SendSuccessMessage(string subjectText, string messageText) {
+			this.SendMessage(subjectText, messageText, this.SuccessAddresses);
+		}
+
+		/// <summary>
+		/// Sends an email message to all registered failure email addresses using the configured SMTP email settings.
+		/// </summary>
+		/// <param name="subjectText"></param>
+		/// <param name="messageText"></param>
+		/// <param name="mailAddresses"></param>
+		public void SendFailureMessage(string subjectText, string messageText) {
+			this.SendMessage(subjectText, messageText, this.FailureAddresses);
 		}
 
 		/// <summary>
@@ -213,52 +261,6 @@ namespace BestBuy.Sniper.Client {
 		}
 
 		/// <summary>
-		/// Sends an email message using the configured SMTP email settings.
-		/// </summary>
-		/// <param name="subjectText"></param>
-		/// <param name="messageText"></param>
-		/// <param name="mailAddresses"></param>
-		private void SendMessage(string subjectText, string messageText, MailAddressCollection mailAddresses) {
-			if (mailAddresses?.Count > 0) {
-				
-				using var client = new SmtpClient(this.SMTPAddress, this.SMTPPort);
-				using var message = new MailMessage();
-				
-				client.Credentials = new NetworkCredential(this.SMTPUserName, this.SMTPPassword);
-				client.EnableSsl = this.SMTPEnableSSL;
-
-				message.Subject = subjectText;
-				message.Body = messageText;
-				message.From = new MailAddress(this.SMTPUserName);
-				foreach (var mailAddress in mailAddresses) {
-					message.To.Add(mailAddress);
-				}
-
-				client.Send(message);
-			}
-		}
-
-		/// <summary>
-		/// Sends an email message to all registered success email addresses using the configured SMTP email settings.
-		/// </summary>
-		/// <param name="subjectText"></param>
-		/// <param name="messageText"></param>
-		/// <param name="mailAddresses"></param>
-		public void SendSuccessMessage(string subjectText, string messageText) {
-			this.SendMessage(subjectText, messageText, this.SuccessAddresses);
-		}
-
-		/// <summary>
-		/// Sends an email message to all registered failure email addresses using the configured SMTP email settings.
-		/// </summary>
-		/// <param name="subjectText"></param>
-		/// <param name="messageText"></param>
-		/// <param name="mailAddresses"></param>
-		public void SendFailureMessage(string subjectText, string messageText) {
-			this.SendMessage(subjectText, messageText, this.FailureAddresses);
-		}
-
-		/// <summary>
 		/// Construct a new <seealso cref="Timer"/> and begin querying the BestBuy web services for the specified product SKU.
 		/// </summary>
 		public void Start() {
@@ -281,7 +283,7 @@ namespace BestBuy.Sniper.Client {
 			}
 		}
 
-		#endregion
+#endregion
 
 	}
 
