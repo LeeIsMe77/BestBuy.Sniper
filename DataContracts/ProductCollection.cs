@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
+﻿using System.Collections.ObjectModel;
 
-namespace BestBuyListingNotifier {
+namespace BestBuy.Sniper.Client.DataContracts {
 	public sealed class ProductCollection
 		: Collection<Product> {
 

@@ -1,40 +1,44 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
-namespace BestBuyListingNotifier {
+namespace BestBuy.Sniper.Client.DataContracts {
 	public sealed class Product {
 
-		[JsonProperty(@"sku")]
-		public string Sku { get; set; }
+		[JsonPropertyName(@"sku")]
+		public long Sku { get; set; }
 
-		[JsonProperty(@"name")]
+		[JsonPropertyName(@"name")]
 		public string Name { get; set; }
 
-		[JsonProperty(@"inStoreAvailability")]
+		[JsonPropertyName(@"inStoreAvailability")]
 		public bool InStoreAvailability { get; set; }
 
-		[JsonProperty(@"inStoreAvailabilityText")]
+		[JsonPropertyName(@"inStoreAvailabilityText")]
 		public string InStoreAvailabilityText { get; set; }
 
-		[JsonProperty(@"inStoreAvailabilityUpdateDate")]
+		[JsonPropertyName(@"inStoreAvailabilityUpdateDate")]
 		public DateTime InStoreAvailabilityUpdateDate { get; set; }
 
-		[JsonProperty(@"itemUpdateDate")]
+		[JsonPropertyName(@"itemUpdateDate")]
 		public DateTime ItemUpdateDate { get; set; }
 
-		[JsonProperty(@"onlineAvailability")]
+		[JsonPropertyName(@"onlineAvailability")]
 		public bool OnlineAvailability { get; set; }
 
-		[JsonProperty(@"onlineAvailabilityText")]
+		[JsonPropertyName(@"onlineAvailabilityText")]
 		public string OnlineAvailabilityText { get; set; }
 
-		[JsonProperty(@"onlineAvailabilityUpdateDate")]
+		[JsonPropertyName(@"onlineAvailabilityUpdateDate")]
 		public DateTime OnlineAvailabilityUpdateDate { get; set; }
 
-		[JsonProperty(@"addToCartUrl")]
+		[JsonPropertyName(@"addToCartUrl")]
 		public string AddToCardUrl { get; set; }
+
+		[JsonPropertyName(@"regularPrice")]
+		public decimal RegularPrice { get; set; }
+
+		[JsonPropertyName(@"salePrice")]
+		public decimal SalePrice { get; set; }
 
 	}
 

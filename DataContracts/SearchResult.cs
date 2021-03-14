@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
-namespace BestBuyListingNotifier {
+namespace BestBuy.Sniper.Client.DataContracts {
 
 	public sealed class SearchResult {
 
-		[JsonProperty(@"from")]
+		[JsonPropertyName(@"from")]
 		public int From { get; set; }
 
-		[JsonProperty(@"to")]
+		[JsonPropertyName(@"to")]
 		public int To { get; set; }
 
-		[JsonProperty(@"totalPages")]
+		[JsonPropertyName(@"totalPages")]
 		public int TotalPages { get; set; }
 
-		[JsonProperty("products", DefaultValueHandling = DefaultValueHandling.Ignore)]
+		[JsonPropertyName("products")]
 		public ProductCollection Products { get; set; } = new ProductCollection();
 
 	}
