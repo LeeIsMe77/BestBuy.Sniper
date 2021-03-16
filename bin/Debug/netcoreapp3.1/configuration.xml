@@ -1,12 +1,1 @@
-<Configuration>
-    <SMTPUserName>YOURAUTOMATION@EMAIL.ACCOUNT</SMTPUserName>
-    <SMTPPassword>YOURAUTOMATIONPASSWORD</SMTPPassword>
-    <SMTPAddress>smtp.gmail.com</SMTPAddress>
-    <SMTPPortNumber>587</SMTPPortNumber>
-    <SMTPEnableSsl>true</SMTPEnableSsl>
-    <SMTPFailureEmailAddresses>sample@email.com;1231231234@text.att.com</SMTPFailureEmailAddresses>
-    <SMTPAvailabilityEmailAddresses>sample@email.com;1231231234@text.att.com</SMTPAvailabilityEmailAddresses>
-    <BestBuyRefreshInterval>15</BestBuyRefreshInterval>
-    <BestBuyAPIKey>MYAPIKEYFROMBESTBUY</BestBuyAPIKey>
-    <BestBuySku>THEBESTBUYPRODUCTSKU</BestBuySku>
-</Configuration>
+﻿<?xml version="1.0" encoding="utf-8"?><Configuration><SMTPUserName>YOURAUTOMATION@EMAIL.ACCOUNT DUH</SMTPUserName><SMTPPassword>YOURAUTOMATIONPASSWORD</SMTPPassword><SMTPAddress>smtp.gmail.com</SMTPAddress><SMTPPortNumber>587</SMTPPortNumber><SMTPEnableSsl>true</SMTPEnableSsl><SMTPFailureEmailAddresses>sample@email.com;1231231234@text.att.com</SMTPFailureEmailAddresses><SMTPAvailabilityEmailAddresses>sample@email.com;1231231234@text.att.com</SMTPAvailabilityEmailAddresses><BestBuyRefreshInterval>15</BestBuyRefreshInterval><BestBuyAPIKey>MYAPIKEYFROMBESTBUY</BestBuyAPIKey><BestBuySku>THEBESTBUYPRODUCTSKU</BestBuySku></Configuration>

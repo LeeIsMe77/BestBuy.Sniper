@@ -6,6 +6,7 @@ using System.Net.Mail;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using BestBuy.Sniper.Client.Properties;
 using static BestBuy.Sniper.Client.BestBuyRequestManager;
 
 namespace BestBuy.Sniper.Client {
@@ -15,6 +16,22 @@ namespace BestBuy.Sniper.Client {
 
 		#region Properties
 
+		#region ConfigurationPath
+
+		private string _configurationPath;
+
+		public string ConfigurationPath {
+			get {
+				if (_configurationPath == null) {
+					var rootPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+					_configurationPath = Path.Combine(rootPath, @"configuration.xml");
+				}
+				return _configurationPath;
+			}
+		}
+
+		#endregion
+
 		private BestBuyRequestManager RequestManager { get; set; }
 
 		#endregion
@@ -23,6 +40,8 @@ namespace BestBuy.Sniper.Client {
 
 		public SniperManager() {
 			this.InitializeComponent();
+			saveConfigurationButton.Click += this.saveConfigurationButton_Click;
+			saveConfigurationButton.ShortcutKeys = Keys.Control | Keys.Shift | Keys.S;
 			start.Text = this.RequestManager == null ? @"Start" : @"Stop";
 		}
 
@@ -34,8 +53,6 @@ namespace BestBuy.Sniper.Client {
 			base.OnLoad(e);
 
 			#region Load settings into the form.
-			var rootPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			var configurationPath = Path.Combine(rootPath, @"configuration.xml");
 
 			static string SafeElementValue(XElement element, string elementName) {
 				return element?.Element(elementName)?.Value is string returnValue && !string.IsNullOrWhiteSpace(returnValue)
@@ -43,15 +60,22 @@ namespace BestBuy.Sniper.Client {
 					: null;
 			}
 
-			if (File.Exists(configurationPath)) {
+			if (!File.Exists(this.ConfigurationPath)) {
 				try {
-					var configuration = XElement.Load(configurationPath);
+					XElement.Parse(Resources.SampleConfiguration).Save(this.ConfigurationPath, SaveOptions.DisableFormatting);
+				}
+				catch { }
+			}
+
+			if (File.Exists(this.ConfigurationPath)) {
+				try {
+					var configuration = XElement.Load(this.ConfigurationPath);
 					smtpUserName.Text = SafeElementValue(configuration, @"SMTPUserName");
 					smtpPassword.Text = SafeElementValue(configuration, @"SMTPPassword");
 					smtpAddress.Text = SafeElementValue(configuration, @"SMTPAddress");
 					smtpPort.Value = int.TryParse(SafeElementValue(configuration, @"SMTPPortNumber"), out var portNumber) ? portNumber : 0;
 					var tempEnableSsl = SafeElementValue(configuration, @"SMTPEnableSsl");
-					enableSsl.Checked = new[] { bool.TrueString, @"1", @"T", @"Y", @"Yes" }.Any(value => string.Equals(value, tempEnableSsl, StringComparison.OrdinalIgnoreCase));
+					smtpEnableSsl.Checked = new[] { bool.TrueString, @"1", @"T", @"Y", @"Yes" }.Any(value => string.Equals(value, tempEnableSsl, StringComparison.OrdinalIgnoreCase));
 					refreshIntervalSeconds.Value = int.TryParse(SafeElementValue(configuration, @"BestBuyRefreshInterval"), out var interval) ? interval : 15;
 					apiKey.Text = SafeElementValue(configuration, @"BestBuyAPIKey");
 					sku.Text = SafeElementValue(configuration, @"BestBuySku");
@@ -60,7 +84,7 @@ namespace BestBuy.Sniper.Client {
 					successEmails.Text = SafeElementValue(configuration, @"SMTPAvailabilityEmailAddresses");
 				}
 				catch (Exception caught) {
-					Console.WriteLine($@"Failed to read configuration file at location '{configurationPath}'");
+					Console.WriteLine($@"Failed to read configuration file at location '{this.ConfigurationPath}'");
 					Console.WriteLine(caught.Message);
 				}
 			}
@@ -157,7 +181,7 @@ namespace BestBuy.Sniper.Client {
 					RefreshIntervalSeconds = refresh,
 					SkuNumber = skuNumber,
 					SMTPAddress = smtpAddress.Text,
-					SMTPEnableSSL = enableSsl.Checked,
+					SMTPEnableSSL = smtpEnableSsl.Checked,
 					SMTPPassword = smtpPassword.Text,
 					SMTPPort = (int)smtpPort.Value,
 					SMTPUserName = smtpUserName.Text,
@@ -165,12 +189,15 @@ namespace BestBuy.Sniper.Client {
 				};
 
 				this.RequestManager.SearchResultExecuted += new SearchResultExecutedDelegate(this.SearchExecuted);
-				var result = MessageBox.Show(this, @"Would you like to send a test message to the registered success email addresses?", @"Send Test Message?", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+				var result = MessageBox.Show(this, @"Would you like to send a test message to the registered success email addresses?", @"Send Test Message?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Information);
 				if (result == DialogResult.Yes) {
 					this.RequestManager.SendSuccessMessage(
 						@"Test",
 						$@"This is a test message. Monitoring for product with sku '{skuNumber}' has begun."
 						);
+				}
+				else if (result == DialogResult.Cancel) {
+					return;
 				}
 
 				this.RequestManager.Start();
@@ -197,6 +224,29 @@ namespace BestBuy.Sniper.Client {
 
 		#region Control Events
 
+		private void saveConfigurationButton_Click(object sender, EventArgs e) {
+			try {
+				new XElement(
+					@"Configuration",
+					new XElement(@"SMTPUserName", smtpUserName.Text),
+					new XElement(@"SMTPPassword", smtpPassword.Text),
+					new XElement(@"SMTPAddress", smtpAddress.Text),
+					new XElement(@"SMTPPortNumber", (int)smtpPort.Value),
+					new XElement(@"SMTPEnableSsl", smtpEnableSsl.Checked),
+					new XElement(@"SMTPFailureEmailAddresses", failureEmails.Text),
+					new XElement(@"SMTPAvailabilityEmailAddresses", successEmails.Text),
+					new XElement(@"BestBuyRefreshInterval", (int)refreshIntervalSeconds.Value),
+					new XElement(@"BestBuyAPIKey", apiKey.Text),
+					new XElement(@"BestBuySku", sku.Text)
+					).Save(this.ConfigurationPath, SaveOptions.DisableFormatting);
+
+				_ = MessageBox.Show(this, @"Configuration has been saved successfully.", @"Configuration Saved...", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			}
+			catch (Exception caught) {
+				_ = MessageBox.Show(this, caught.Message, @"Failure Saving Configuration...", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
 		private void start_Click(object sender, EventArgs e) {
 			try {
 				if (sender is Button button) {
@@ -221,4 +271,5 @@ namespace BestBuy.Sniper.Client {
 		#endregion
 
 	}
+
 }
